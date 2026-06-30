@@ -322,7 +322,7 @@
             loadLevel() {
                 // 深拷贝地图
                 this.map = maps[this.level % maps.length].map(row => [...row]);
-                this.player = new Tank(360, 520, '#00ff88', true, this);
+                this.player = new Tank(360, 480, '#00ff88', true, this);
                 this.enemies = [];
                 this.spawnEnemy();
                 this.spawnEnemy();
@@ -437,7 +437,7 @@
                     this.gameOver();
                 } else {
                     this.player.x = 360;
-                    this.player.y = 520;
+                    this.player.y = 480;
                     this.player.direction = 'up';
                 }
             }
