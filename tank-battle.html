@@ -152,13 +152,14 @@
         ];
 
         class Tank {
-            constructor(x, y, color, isPlayer = false) {
+            constructor(x, y, color, isPlayer = false, game) {
                 this.x = x;
                 this.y = y;
                 this.width = 32;
                 this.height = 32;
                 this.color = color;
                 this.isPlayer = isPlayer;
+                this.game = game;
                 this.direction = isPlayer ? 'up' : 'down';
                 this.speed = isPlayer ? 3 : 1.5;
                 this.bullets = [];
@@ -236,7 +237,7 @@
                     const col = Math.floor(p.x / TILE_SIZE);
                     const row = Math.floor(p.y / TILE_SIZE);
                     if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return false;
-                    if (game.map[row][col] === 1 || game.map[row][col] === 2) return false;
+                    if (this.game.map[row][col] === 1 || this.game.map[row][col] === 2) return false;
                 }
                 return true;
             }
@@ -280,13 +281,13 @@
                     const col = Math.floor((b.x + b.width / 2) / TILE_SIZE);
                     const row = Math.floor((b.y + b.height / 2) / TILE_SIZE);
                     if (row >= 0 && row < ROWS && col >= 0 && col < COLS) {
-                        if (game.map[row][col] === 1) {
-                            game.map[row][col] = 0;
+                        if (this.game.map[row][col] === 1) {
+                            this.game.map[row][col] = 0;
                             this.bullets.splice(i, 1);
                             continue;
                         }
-                        if (game.map[row][col] === 2) {
-                            game.gameOver();
+                        if (this.game.map[row][col] === 2) {
+                            this.game.gameOver();
                             return;
                         }
                     }
@@ -321,7 +322,7 @@
             loadLevel() {
                 // 深拷贝地图
                 this.map = maps[this.level % maps.length].map(row => [...row]);
-                this.player = new Tank(360, 520, '#00ff88', true);
+                this.player = new Tank(360, 520, '#00ff88', true, this);
                 this.enemies = [];
                 this.spawnEnemy();
                 this.spawnEnemy();
@@ -337,7 +338,7 @@
                     {x: 720, y: 200}
                 ];
                 const pos = positions[Math.floor(Math.random() * positions.length)];
-                const enemy = new Tank(pos.x, pos.y, '#ff4444', false);
+                const enemy = new Tank(pos.x, pos.y, '#ff4444', false, this);
                 this.enemies.push(enemy);
             }
 
