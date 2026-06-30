@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>坦克大战 - Tank Battle</title>
     <style>
         * {
@@ -84,6 +84,77 @@
         #gameOver button:hover {
             background: #00cc6a;
         }
+        #touchControls {
+            display: none;
+            width: 100%;
+            max-width: 800px;
+            margin-top: 15px;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 20px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .dpad {
+            display: grid;
+            grid-template-columns: 60px 60px 60px;
+            grid-template-rows: 60px 60px 60px;
+            gap: 5px;
+        }
+        .dpad button {
+            width: 60px;
+            height: 60px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            font-size: 24px;
+            border: 2px solid #00ff88;
+            touch-action: none;
+        }
+        .dpad button:active {
+            background: rgba(0, 255, 136, 0.5);
+        }
+        .dpad .empty {
+            background: transparent;
+            border: none;
+        }
+        #fireBtn {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            border: 2px solid #ff4444;
+            background: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+            font-size: 20px;
+            font-weight: bold;
+            touch-action: none;
+        }
+        #fireBtn:active {
+            background: rgba(255, 68, 68, 0.5);
+        }
+        @media (max-width: 850px) {
+            #gameCanvas {
+                max-width: 100%;
+                height: auto;
+            }
+            #controls {
+                display: none;
+            }
+            #touchControls {
+                display: flex;
+            }
+            h1 {
+                font-size: 22px;
+            }
+            #info {
+                font-size: 14px;
+            }
+            #scoreBoard {
+                font-size: 14px;
+                gap: 15px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -95,6 +166,20 @@
         <div>关卡: <span id="level">1</span></div>
     </div>
     <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="touchControls">
+        <div class="dpad">
+            <div class="empty"></div>
+            <button id="btnUp" data-dir="up">▲</button>
+            <div class="empty"></div>
+            <button id="btnLeft" data-dir="left">◀</button>
+            <div class="empty"></div>
+            <button id="btnRight" data-dir="right">▶</button>
+            <div class="empty"></div>
+            <button id="btnDown" data-dir="down">▼</button>
+            <div class="empty"></div>
+        </div>
+        <button id="fireBtn">开火</button>
+    </div>
     <div id="controls">
         <strong>W A S D</strong> 移动 &nbsp;|&nbsp; <strong>空格 / J</strong> 射击 &nbsp;|&nbsp; <strong>R</strong> 重新开始<br>
         黄色坦克为你，红色坦克为敌人，灰色为墙壁
@@ -352,16 +437,72 @@
                     this.keys[e.key.toLowerCase()] = false;
                     if (e.code === 'Space') this.keys['shoot'] = false;
                 });
+
+                // 触屏控制
+                this.touchDirection = null;
+                const dpadButtons = document.querySelectorAll('.dpad button[data-dir]');
+                for (const btn of dpadButtons) {
+                    const dir = btn.dataset.dir;
+                    btn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        this.touchDirection = dir;
+                    }, {passive: false});
+                    btn.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        if (this.touchDirection === dir) this.touchDirection = null;
+                    }, {passive: false});
+                    btn.addEventListener('touchcancel', (e) => {
+                        e.preventDefault();
+                        if (this.touchDirection === dir) this.touchDirection = null;
+                    }, {passive: false});
+                    // 鼠标支持（方便桌面测试）
+                    btn.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        this.touchDirection = dir;
+                    });
+                    btn.addEventListener('mouseup', (e) => {
+                        e.preventDefault();
+                        if (this.touchDirection === dir) this.touchDirection = null;
+                    });
+                    btn.addEventListener('mouseleave', (e) => {
+                        if (this.touchDirection === dir) this.touchDirection = null;
+                    });
+                }
+
+                const fireBtn = document.getElementById('fireBtn');
+                fireBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.keys['shoot'] = true;
+                }, {passive: false});
+                fireBtn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    this.keys['shoot'] = false;
+                }, {passive: false});
+                fireBtn.addEventListener('touchcancel', (e) => {
+                    e.preventDefault();
+                    this.keys['shoot'] = false;
+                }, {passive: false});
+                fireBtn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    this.keys['shoot'] = true;
+                });
+                fireBtn.addEventListener('mouseup', (e) => {
+                    e.preventDefault();
+                    this.keys['shoot'] = false;
+                });
+                fireBtn.addEventListener('mouseleave', (e) => {
+                    this.keys['shoot'] = false;
+                });
             }
 
             update() {
                 if (!this.running) return;
 
                 // 玩家移动
-                if (this.keys['w']) this.player.move('up');
-                else if (this.keys['s']) this.player.move('down');
-                else if (this.keys['a']) this.player.move('left');
-                else if (this.keys['d']) this.player.move('right');
+                if (this.keys['w'] || this.touchDirection === 'up') this.player.move('up');
+                else if (this.keys['s'] || this.touchDirection === 'down') this.player.move('down');
+                else if (this.keys['a'] || this.touchDirection === 'left') this.player.move('left');
+                else if (this.keys['d'] || this.touchDirection === 'right') this.player.move('right');
 
                 if (this.keys['shoot'] || this.keys['j']) this.player.shoot();
 
